@@ -8,6 +8,12 @@ var defaultOpts = {
 	withStartIndices: false, //Add startIndex properties to nodes
 	withEndIndices: false, //Add endIndex properties to nodes
 };
+const DEBUG = 0
+var log = function () {
+  if (DEBUG) {
+    return console.log.apply(console, arguments);
+  }
+};
 
 function DomHandler(callback, options, elementCB) {
   this._callback = callback
@@ -21,18 +27,18 @@ function DomHandler(callback, options, elementCB) {
 }
 DomHandler.prototype = {
   onreset() {
-    console.log('reset')
+    log('reset')
     DomHandler.call(this, this._callback, this._options, this._elementCB)
   },
   onend() {
-    console.log('end')
+    log('end')
     if (this._done) return
     this._done = true
     this._parser = null
     this._handleCallback(null)
   },
   onerror(error) {
-    console.log('onerror')
+    log('onerror')
     if (typeof this._callback === 'function') {
       this._callback(error, this.dom, this.content)
     } else {
@@ -40,7 +46,7 @@ DomHandler.prototype = {
     }
   },
   onclosetag(tagname) {
-    console.log('closetag', tagname)
+    log('closetag', tagname)
     var elem = this._tagStack.pop();
 
     if (singleTag.indexOf(tagname) === -1) {
@@ -54,7 +60,7 @@ DomHandler.prototype = {
     if(this._elementCB) this._elementCB(elem);
   },
   onopentag(name, attribs) {
-    console.log('opentag', name, attribs)
+    log('opentag', name, attribs)
     var properties = {
       type: ElementType.Tag,
       name: name,
@@ -69,7 +75,7 @@ DomHandler.prototype = {
     this._addContentElement(properties)
   },
   ontext(data) {
-    console.log('text', data)
+    log('text', data)
     var normalize = this._options.normalizeWhitespace || this._options.ignoreWhitespace;
 
     var lastTag;
@@ -120,7 +126,7 @@ DomHandler.prototype = {
     this._addContentElement(properties)
   },
   oncomment(data) {
-    console.log('comments', data)
+    log('comments', data)
     var lastTag = this._tagStack[this._tagStack.length - 1];
 
     if(lastTag && lastTag.type === ElementType.Comment){
@@ -141,7 +147,7 @@ DomHandler.prototype = {
     this._addContentElement(properties)
   },
   oncdatastart() {
-    console.log('datastart')
+    log('datastart')
     var properties = {
       children: [{
         data: "",
@@ -156,15 +162,15 @@ DomHandler.prototype = {
     this._tagStack.push(element);
   },
   oncdataend() {
-    console.log('dataend')
+    log('dataend')
     this._tagStack.pop();
   },
   oncommentend() {
-    console.log('commented')
+    log('commented')
     this._tagStack.pop();
   },
   onprocessinginstruction(name, data) {
-    console.log('processing')
+    log('processing')
     var element = this._createDomElement({
       name: name,
       data: data,
@@ -215,7 +221,7 @@ DomHandler.prototype = {
   },
   _addContentElement(properties) {
     const { attribs, type, name, data } = properties
-    console.log(properties, 'properties')
+    log(properties, 'properties')
 
     if (type === ElementType.Tag) {
       // @TODO: stuff diff
@@ -224,17 +230,26 @@ DomHandler.prototype = {
         // 接口不一致
         if (key === 's-for') {
           if (attribs[key].match('in')) {
-            const arr = attribs[key].split(' ')[0]
-            const item = arr.split(',')[0]
-            const index = arr.split(',')[1]
+            const arr = attribs[key].split(' ')
+            const item = arr[0].split(',')[0] || 'item'
+            const index = arr[0].split(',')[1] || 'index'
+            const value = arr[arr.length - 1]
             if (item) {
-              attributes += `wx:for-item=${item} `
+              attributes += `wx:for-item="${item}" `
             }
             if (index) {
-              attributes += `wx:for-index=${index} `
+              attributes += `wx:for-index="${index}" `
             }
+            attributes += `${key.replace('s-', 'wx:')}="{{${value}}}" `
+          } else {
+            attributes += `${key.replace('s-', 'wx:')}="${attribs[key]}" `
           }
-          attributes += `${key.replace('s-', 'wx:')}="${attribs[key]}" `
+        } else if (key === 's-if') {
+          let value = attribs[key]
+          if (!value.match(/^\{\{(.*)\}\}$/g)) {
+            value = `{{${value}}}`
+          }
+          attributes += `${key.replace('s-', 'wx:')}="${value}"`
         } else if (key.match(/^s-/g)) {
           // key = key.replace('s-', 'wx:')
           attributes += `${key.replace('s-', 'wx:')}="${attribs[key]}" `
