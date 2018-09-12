@@ -8,14 +8,4 @@
 s2w source dest
 ```
 
-webpack.config({
-  babel: 'xx'
-})
-
-npm run dev
-
-source => wx_dest
-source => swan_dest
-
-
 ## 开发

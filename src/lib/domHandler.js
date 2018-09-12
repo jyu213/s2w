@@ -250,11 +250,18 @@ DomHandler.prototype = {
             value = `{{${value}}}`
           }
           attributes += `${key.replace('s-', 'wx:')}="${value}"`
+        // } else if (key === 'style') {
+        //   // replace rem @TODO
+        //   let value = attribs[key]
         } else if (key.match(/^s-/g)) {
           // key = key.replace('s-', 'wx:')
           attributes += `${key.replace('s-', 'wx:')}="${attribs[key]}" `
         } else {
-          attributes += `${key}="${attribs[key]}" `
+          if (attribs[key] === '') {
+            attributes += `${key} `
+          } else {
+            attributes += `${key}="${attribs[key]}" `
+          }
         }
       })
 
