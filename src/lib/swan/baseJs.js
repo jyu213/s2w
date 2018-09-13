@@ -1,4 +1,4 @@
-const {parse, parseExpression} = require('@babel/parser')
+const { parse } = require('@babel/parser')
 const generate = require('@babel/generator').default
 const traverse = require('@babel/traverse').default
 const t = require('babel-types')

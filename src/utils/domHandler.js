@@ -1,4 +1,4 @@
-const ElementType = require("domelementtype");
+const ElementType = require("./domelementtype");
 const NodePrototype = require('./node')
 const ElementPrototype = require('./element')
 const singleTag = require('./singleTag')
@@ -49,9 +49,12 @@ DomHandler.prototype = {
     log('closetag', tagname)
     var elem = this._tagStack.pop();
 
-    if (singleTag.indexOf(tagname) === -1) {
-      this.content += `</${tagname}>`
-    }
+    var properties = {
+      type: ElementType.TagClose,
+      name: tagname,
+      children: []
+    };
+    this._addContentElement(properties)
 
     if(this._options.withEndIndices && elem){
       elem.endIndex = this._parser.endIndex;
@@ -227,41 +230,10 @@ DomHandler.prototype = {
       // @TODO: stuff diff
       let attributes = ''
       Object.keys(attribs).map((key) => {
-        // 接口不一致
-        if (key === 's-for') {
-          if (attribs[key].match('in')) {
-            const arr = attribs[key].split(' ')
-            const item = arr[0].split(',')[0] || 'item'
-            const index = arr[0].split(',')[1] || 'index'
-            const value = arr[arr.length - 1]
-            if (item) {
-              attributes += `wx:for-item="${item}" `
-            }
-            if (index) {
-              attributes += `wx:for-index="${index}" `
-            }
-            attributes += `${key.replace('s-', 'wx:')}="{{${value}}}" `
-          } else {
-            attributes += `${key.replace('s-', 'wx:')}="${attribs[key]}" `
-          }
-        } else if (key === 's-if') {
-          let value = attribs[key]
-          if (!value.match(/^\{\{(.*)\}\}$/g)) {
-            value = `{{${value}}}`
-          }
-          attributes += `${key.replace('s-', 'wx:')}="${value}"`
-        // } else if (key === 'style') {
-        //   // replace rem @TODO
-        //   let value = attribs[key]
-        } else if (key.match(/^s-/g)) {
-          // key = key.replace('s-', 'wx:')
-          attributes += `${key.replace('s-', 'wx:')}="${attribs[key]}" `
+        if (attribs[key] === '') {
+          attributes += `${key} `
         } else {
-          if (attribs[key] === '') {
-            attributes += `${key} `
-          } else {
-            attributes += `${key}="${attribs[key]}" `
-          }
+          attributes += `${key}="${attribs[key]}" `
         }
       })
 
@@ -269,6 +241,10 @@ DomHandler.prototype = {
         this.content += `<${name} ${attributes}>`
       } else {
         this.content += `<${name} ${attributes}/>`
+      }
+    } else if (type === ElementType.TagClose) {
+      if (singleTag.indexOf(name) === -1) {
+        this.content += `</${name}>`
       }
     } else if (type === ElementType.Comment) {
       this.content += `<!-- ${data} -->`

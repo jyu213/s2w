@@ -1,0 +1,20 @@
+#!/usr/bin/env node
+
+let program = require('commander')
+const fs = require('fs')
+const path = require('path')
+const MP = require('../src/mp.js')
+
+program.version(require('../package.json').version)
+  .usage('[source path] [dest path]')
+  .action((source, dest) => {
+    if (!source || !dest) {
+      return program.help()
+    }
+    const sourcePath = path.resolve(source)
+    const destPath = path.resolve(dest)
+
+    const mp = new MP()
+    mp.run(sourcePath, destPath)
+  })
+  .parse(process.argv)

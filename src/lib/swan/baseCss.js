@@ -1,11 +1,4 @@
-const { parse } = require('postcss');
-
-// const {parse, parseExpression} = require('@babel/parser')
-// const generate = require('@babel/generator').default
-// const traverse = require('@babel/traverse').default
-
-const SWAN = 'swan'
-const WX = 'wx'
+const { parse } = require('postcss')
 
 let bodyFontSize = 16
 const run = function(content) {
